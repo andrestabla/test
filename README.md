@@ -4,10 +4,10 @@ Cuestionario interactivo de 180 preguntas (30 por dimensión) para evaluar madur
 
 ## Uso
 
-1. Pulsa **"Generar ZIP (abrir offline)"** en el dashboard; el paquete se crea en tu navegador (sin binarios versionados).
+1. Pulsa **"Generar paquete offline"** en el dashboard; el ZIP se crea en tu navegador (sin binarios versionados).
 2. Guarda y extrae el ZIP generado; abre `index.html` en tu navegador moderno (no requiere backend ni conexión una vez descargado).
 3. Responde cada dimensión en su pestaña y presiona **Enviar dimensión** para actualizar el tablero.
-4. El tablero de resultados (pestaña "Resultados") se actualiza con el radar por dimensión y los índices DQ/AIQ.
+4. Consulta las pestañas **Resultados** e **Líneas de acción** para visualizar radar, barras, análisis por dimensión y recomendaciones.
 
 ## Contenido
 

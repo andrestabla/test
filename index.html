@@ -172,6 +172,16 @@
     .muted { color: var(--muted); }
     .flex { display: flex; align-items: center; gap: 10px; }
     .small { font-size: 12px; }
+    #dimensionInsights, #actionsContainer { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+    .insight-card { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px; display: grid; gap: 6px; }
+    .insight-head { display: flex; justify-content: space-between; gap: 10px; align-items: center; }
+    .level { padding: 4px 8px; border-radius: 999px; font-size: 12px; border: 1px solid var(--border); }
+    .level.bajo { background: rgba(239,68,68,0.15); border-color: rgba(239,68,68,0.3); color: #fca5a5; }
+    .level.intermedio { background: rgba(245,158,11,0.15); border-color: rgba(245,158,11,0.3); color: #fcd34d; }
+    .level.alto { background: rgba(34,197,94,0.18); border-color: rgba(34,197,94,0.35); color: #bbf7d0; }
+    .action-card { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px; display: grid; gap: 8px; }
+    .pill-sm { display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; border-radius: 999px; background: rgba(255,255,255,0.04); border: 1px solid var(--border); font-size: 11px; }
+    .list { padding-left: 18px; color: var(--muted); font-size: 12px; }
     @media (max-width: 920px) {
       header { grid-template-columns: 1fr; }
       .grid-2 { grid-template-columns: 1fr; }
@@ -191,7 +201,7 @@
           <span class="pill">Cálculo DQ / AIQ (ponderación sugerida)</span>
         </div>
         <button type="button" class="download" id="downloadZip">
-          ⬇️ Generar ZIP (abrir offline)
+          Generar paquete offline
         </button>
         <div class="small muted" id="downloadStatus">Genera el paquete sin descargar archivos binarios del repositorio.</div>
       </div>
@@ -259,6 +269,29 @@
           </div>
           <div class="chart-wrap"><canvas id="barChart"></canvas></div>
         </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Resultados por dimensión</div>
+            <div class="card-subtitle">Análisis e interpretación automática al enviar cada bloque.</div>
+          </div>
+          <span class="chip">Niveles: Bajo · Intermedio · Alto</span>
+        </div>
+        <div class="grid" id="dimensionInsights"></div>
+      </div>
+    </section>
+
+    <section class="panel" id="panel-acciones">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Líneas de acción sugeridas</div>
+            <div class="card-subtitle">Quick wins y próximos pasos para cerrar brechas según las respuestas.</div>
+          </div>
+          <span class="chip" id="actionStatus">Esperando envíos</span>
+        </div>
+        <div class="grid" id="actionsContainer"></div>
       </div>
     </section>
   </div>
@@ -474,6 +507,198 @@
     scores: {}
   };
 
+  const interpretations = {
+    estrategia: {
+      low: 'Falta una visión digital/IA consolidada y KPIs claros. Prioriza hoja de ruta, patrocinio ejecutivo y casos de negocio con ROI.',
+      mid: 'La estrategia existe pero requiere ajustar portafolio y medición. Alinea casos de IA al negocio y comunica avances.',
+      high: 'Visión y roadmap digitales claros. El foco es escalar IA y explorar nuevos modelos de negocio basados en datos.'
+    },
+    infra: {
+      low: 'Base tecnológica fragmentada. Urge estandarizar datos, fortalecer ciberseguridad y habilitar nube/MLops básicos.',
+      mid: 'Infraestructura en marcha; mejorar calidad de datos, integración y monitoreo para soportar IA a escala.',
+      high: 'Plataforma sólida. Enfoca en optimizar costos, automatizar pipelines y habilitar autoservicio de datos/IA.'
+    },
+    talento: {
+      low: 'Brechas de skills digitales/IA y cultura ágil. Requiere upskilling masivo y comunidades de práctica.',
+      mid: 'Talento mixto con lagunas en IA y agilidad. Refuerza rutas de carrera, coaching y tiempos para innovar.',
+      high: 'Equipos maduros. Acelera especialización en IA aplicada y programas de retención para roles críticos.'
+    },
+    gob: {
+      low: 'Gobernanza digital incipiente. Define roles, comités, políticas de datos/ética y gestión de riesgos.',
+      mid: 'Marco de gobierno activo pero incompleto. Fortalece métricas, control de cambios y revisión periódica de IA.',
+      high: 'Gobernanza consolidada. Escala transparencia, auditorías continuas y alineación con nuevas regulaciones.'
+    },
+    procesos: {
+      low: 'Procesos poco documentados y baja automatización. Prioriza mapeo, estandarización y pilotos RPA/IA.',
+      mid: 'Automatización selectiva. Expande monitoreo, ROI y orquestación para escalar sin silos.',
+      high: 'Flujos maduros. Optimiza con analítica avanzada y gobernanza de bots para mantener calidad y resiliencia.'
+    },
+    cx: {
+      low: 'Experiencia digital dispareja. Necesita datos omnicanal, NPS y fundamentos de personalización.',
+      mid: 'CX integrada con oportunidades de IA. Mejora pruebas A/B, accesibilidad y modelos de churn/propensión.',
+      high: 'CX robusta. Profundiza hiperpersonalización ética y automatiza acciones predictivas en todos los canales.'
+    }
+  };
+
+  const actionRecommendations = {
+    estrategia: {
+      low: {
+        focus: 'Fundamentos y patrocinio',
+        actions: [
+          'Formalizar visión/misión digital e IA con aprobación ejecutiva.',
+          'Priorizar portafolio de casos con KPIs y ROI estimado.',
+          'Asignar presupuesto y roadmap de IA alineado a procesos clave.'
+        ]
+      },
+      mid: {
+        focus: 'Alineación y escalamiento',
+        actions: [
+          'Comunicar avances y quick wins a toda la organización.',
+          'Refinar KPIs y gobernanza de casos de IA con criterios de valor y riesgo.',
+          'Planificar escalamiento de casos exitosos a nuevas áreas.'
+        ]
+      },
+      high: {
+        focus: 'Ecosistema y nuevos modelos',
+        actions: [
+          'Explorar alianzas con startups/universidades para innovación abierta.',
+          'Probar nuevos modelos de negocio data-driven y generativa.',
+          'Monitorear riesgos y ética en despliegues masivos de IA.'
+        ]
+      }
+    },
+    infra: {
+      low: {
+        focus: 'Base tecnológica segura',
+        actions: [
+          'Documentar arquitectura y políticas de ciberseguridad.',
+          'Implementar data lake mínimo viable con gobierno de accesos.',
+          'Habilitar herramientas BI y etiquetado de datos para IA.'
+        ]
+      },
+      mid: {
+        focus: 'Calidad y MLOps',
+        actions: [
+          'Automatizar pipelines de ingesta/limpieza con monitoreo.',
+          'Consolidar catálogo de APIs y SLAs de datos.',
+          'Desplegar plataforma MLOps con control de versiones y despliegue.'
+        ]
+      },
+      high: {
+        focus: 'Autoservicio y optimización',
+        actions: [
+          'Optimizar costos nube y performance con observabilidad.',
+          'Expandir autoservicio de datos/IA para equipos de negocio.',
+          'Evaluar periodicidad de auditorías de calidad y seguridad.'
+        ]
+      }
+    },
+    talento: {
+      low: {
+        focus: 'Upskilling urgente',
+        actions: [
+          'Programa intensivo de habilidades digitales e IA básica.',
+          'Crear comunidades de práctica y mentoring entre equipos.',
+          'Ajustar compensación/retención para roles críticos.'
+        ]
+      },
+      mid: {
+        focus: 'Especialización y agilidad',
+        actions: [
+          'Certificar líderes en metodologías ágiles y product management.',
+          'Asignar tiempo protegido para experimentación y hackatones.',
+          'Refinar rutas de carrera y evaluación de desempeño digital.'
+        ]
+      },
+      high: {
+        focus: 'Retención y IA aplicada',
+        actions: [
+          'Incentivar investigación aplicada y patentes internas.',
+          'Rotación planificada entre squads para compartir expertise.',
+          'Programas de bienestar y flexibilidad para evitar rotación.'
+        ]
+      }
+    },
+    gob: {
+      low: {
+        focus: 'Marco mínimo de control',
+        actions: [
+          'Constituir comité digital/IA con roles y responsabilidades.',
+          'Publicar políticas de datos, privacidad y ética de IA.',
+          'Implementar gestión de riesgos y continuidad de negocio.'
+        ]
+      },
+      mid: {
+        focus: 'Riesgos y métricas',
+        actions: [
+          'Integrar KPIs de transformación en tableros ejecutivos.',
+          'Auditar proyectos IA (sesgos, desempeño, cumplimiento).',
+          'Fortalecer control de cambios y propiedad de datos.'
+        ]
+      },
+      high: {
+        focus: 'Transparencia y cumplimiento',
+        actions: [
+          'Automatizar reportes de gobernanza y trazabilidad de modelos.',
+          'Alinear con nuevas normativas de IA y protección de datos.',
+          'Revisar contratos y SLAs críticos con proveedores tecnológicos.'
+        ]
+      }
+    },
+    procesos: {
+      low: {
+        focus: 'Documentar y priorizar',
+        actions: [
+          'Mapear procesos clave y definir métricas base.',
+          'Ejecutar pilotos RPA/IA en tareas repetitivas.',
+          'Alinear automatización con gestión del cambio y capacitación.'
+        ]
+      },
+      mid: {
+        focus: 'Escala y orquestación',
+        actions: [
+          'Usar process mining para identificar cuellos de botella.',
+          'Centralizar monitoreo de bots y flujos automatizados.',
+          'Medir ROI y ajustar priorización de automatizaciones.'
+        ]
+      },
+      high: {
+        focus: 'Optimización continua',
+        actions: [
+          'Incorporar IA en decisiones en tiempo real.',
+          'Asegurar interoperabilidad y resiliencia en múltiples plataformas.',
+          'Benchmarking periódico contra líderes del sector.'
+        ]
+      }
+    },
+    cx: {
+      low: {
+        focus: 'Fundamentos de omnicanalidad',
+        actions: [
+          'Mapear journeys y unificar captura de datos en todos los puntos.',
+          'Implementar medición NPS/CES y feedback continuo.',
+          'Establecer estándares de accesibilidad y coherencia de canales.'
+        ]
+      },
+      mid: {
+        focus: 'Personalización y ética',
+        actions: [
+          'Desplegar modelos de recomendación y churn con monitoreo.',
+          'A/B testing y analítica de sentimiento para iterar UX.',
+          'Políticas de transparencia sobre uso de datos y cookies.'
+        ]
+      },
+      high: {
+        focus: 'Hiperpersonalización confiable',
+        actions: [
+          'Orquestar IA en todos los canales (voz, texto, app, web).',
+          'Automatizar acciones proactivas basadas en predicción de necesidades.',
+          'Revisar sesgos y equidad en modelos de cara al cliente.'
+        ]
+      }
+    }
+  };
+
   const downloadBtn = document.getElementById('downloadZip');
   const downloadStatus = document.getElementById('downloadStatus');
   const defaultReadme = `# Batería MD-IA (AlgoritmoT)
@@ -482,10 +707,10 @@ Cuestionario interactivo de 180 preguntas (30 por dimensión) para evaluar madur
 
 ## Uso
 
-1. Pulsa \"Generar ZIP (abrir offline)\" en el dashboard. El ZIP se construye en tu navegador con los archivos actuales (sin descargar binarios del repositorio).
+1. Pulsa \"Generar paquete offline\" en el dashboard. El ZIP se construye en tu navegador con los archivos actuales (sin descargar binarios del repositorio).
 2. Guarda y extrae el ZIP generado; abre \`index.html\` en tu navegador moderno (no requiere backend ni conexión una vez descargado).
 3. Responde cada dimensión en su pestaña y presiona **Enviar dimensión** para actualizar el tablero.
-4. El tablero de resultados (pestaña \"Resultados\") se actualiza con el radar por dimensión y los índices DQ/AIQ.
+4. Consulta las pestañas \"Resultados\" y \"Líneas de acción\" para revisar radar, barras, análisis por dimensión y recomendaciones.
 
 ## Contenido del paquete generado
 
@@ -541,7 +766,7 @@ Cuestionario interactivo de 180 preguntas (30 por dimensión) para evaluar madur
       downloadStatus.textContent = 'Error al generar el ZIP. Refresca la página e inténtalo de nuevo.';
     } finally {
       downloadBtn.disabled = false;
-      downloadBtn.textContent = '⬇️ Generar ZIP (abrir offline)';
+      downloadBtn.textContent = 'Generar paquete offline';
     }
   }
 
@@ -569,6 +794,12 @@ Cuestionario interactivo de 180 preguntas (30 por dimensión) para evaluar madur
     resultsBtn.textContent = '📊 Resultados';
     resultsBtn.dataset.target = 'panel-resultados';
     tabsNav.appendChild(resultsBtn);
+
+    const actionsBtn = document.createElement('button');
+    actionsBtn.className = 'tab-btn';
+    actionsBtn.textContent = '🚀 Líneas de acción';
+    actionsBtn.dataset.target = 'panel-acciones';
+    tabsNav.appendChild(actionsBtn);
 
     tabsNav.addEventListener('click', (e) => {
       if (!e.target.classList.contains('tab-btn')) return;
@@ -722,6 +953,68 @@ Cuestionario interactivo de 180 preguntas (30 por dimensión) para evaluar madur
     return { dq: Math.round(dq * 10) / 10, aiq: Math.round(aiq * 10) / 10, partial: submittedDims.length !== dimensions.length };
   }
 
+  function levelForScore(score) {
+    if (score === null || score === undefined) return { label: 'Pendiente', className: '', key: 'pending' };
+    if (score < 34) return { label: 'Bajo', className: 'bajo', key: 'low' };
+    if (score < 67) return { label: 'Intermedio', className: 'intermedio', key: 'mid' };
+    return { label: 'Alto', className: 'alto', key: 'high' };
+  }
+
+  function renderInsights() {
+    const container = document.getElementById('dimensionInsights');
+    container.innerHTML = '';
+    dimensions.forEach(dim => {
+      const score = state.scores[dim.id];
+      const level = levelForScore(score);
+      const analysis = level.key === 'pending' ? 'Envía la dimensión para ver el análisis.' : interpretations[dim.id][level.key];
+      const card = document.createElement('div');
+      card.className = 'insight-card';
+      card.innerHTML = `
+        <div class="insight-head">
+          <div>
+            <strong>${dim.name}</strong>
+            <div class="small muted">${level.key === 'pending' ? 'Aún no calculado' : 'Interpretación automatizada'}</div>
+          </div>
+          <span class="level ${level.className}">${level.label}</span>
+        </div>
+        <div class="small muted">${score === undefined ? 'Puntaje pendiente' : `Puntaje: ${score}%`}</div>
+        <p>${analysis}</p>
+      `;
+      container.appendChild(card);
+    });
+  }
+
+  function renderActions() {
+    const container = document.getElementById('actionsContainer');
+    const status = document.getElementById('actionStatus');
+    container.innerHTML = '';
+    const submitted = Object.keys(state.submitted).length > 0;
+    status.textContent = submitted ? 'Personalizado con tus respuestas' : 'Esperando envíos';
+    status.style.background = submitted ? 'rgba(34,197,94,0.18)' : 'rgba(255,255,255,0.05)';
+    status.style.borderColor = submitted ? 'rgba(34,197,94,0.35)' : 'var(--border)';
+
+    dimensions.forEach(dim => {
+      const score = state.scores[dim.id];
+      const level = levelForScore(score);
+      const recSet = actionRecommendations[dim.id][level.key] || { focus: 'Completa la dimensión para ver recomendaciones.', actions: [] };
+      const card = document.createElement('div');
+      card.className = 'action-card';
+      card.innerHTML = `
+        <div class="insight-head">
+          <div>
+            <strong>${dim.name}</strong>
+            <div class="small muted">${level.key === 'pending' ? 'Sin puntaje aún' : recSet.focus}</div>
+          </div>
+          <span class="level ${level.className}">${level.label}</span>
+        </div>
+        <div class="small muted">${score === undefined ? 'Completa y envía para priorizar' : `Puntaje: ${score}%`}</div>
+        ${recSet.actions.length ? `<div class="pill-sm">Quick wins y próximos pasos</div>` : ''}
+        ${recSet.actions.length ? `<ul class="list">${recSet.actions.map(a => `<li>${a}</li>`).join('')}</ul>` : '<p class="muted small">Sin recomendaciones hasta enviar.</p>'}
+      `;
+      container.appendChild(card);
+    });
+  }
+
   let radarChart = null;
   let barChart = null;
 
@@ -814,6 +1107,8 @@ Cuestionario interactivo de 180 preguntas (30 por dimensión) para evaluar madur
       barChart.data.datasets[0].data = [0,0];
     }
     barChart.update();
+    renderInsights();
+    renderActions();
   }
 
   if (downloadBtn) {
