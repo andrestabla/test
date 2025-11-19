@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block title %}Iniciar sesión · MD-IA{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card p-4">
+      <h2 class="mb-3">Inicia sesión</h2>
+      <form method="post">
+        <div class="mb-3">
+          <label class="form-label">Correo</label>
+          <input type="email" class="form-control" name="email" required />
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Contraseña</label>
+          <input type="password" class="form-control" name="password" required />
+        </div>
+        <button class="btn btn-primary w-100" type="submit">Ingresar</button>
+      </form>
+      <p class="mt-3">¿Sin cuenta? <a href="{{ url_for('auth.register') }}">Regístrate</a>.</p>
+    </div>
+  </div>
+</div>
+{% endblock %}
