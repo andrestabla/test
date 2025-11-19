@@ -30,6 +30,7 @@ const blockChip = document.getElementById('blockChip');
 const blockName = document.getElementById('blockName');
 const blockBreadcrumb = document.getElementById('blockBreadcrumb');
 const blockProgressBar = document.getElementById('blockProgressBar');
+const blockFeedback = document.getElementById('blockFeedback');
 const globalProgress = document.getElementById('globalProgress');
 const globalProgressBar = document.getElementById('globalProgressBar');
 const dimsDone = document.getElementById('dimsDone');
@@ -40,18 +41,27 @@ const resultStatus = document.getElementById('resultStatus');
 const resultsCharts = document.getElementById('resultsCharts');
 const actionsContainer = document.getElementById('actionsContainer');
 const dimensionInsights = document.getElementById('dimensionInsights');
+const finalSummary = document.getElementById('finalSummary');
 const toast = document.getElementById('toast');
 const modalBackdrop = document.getElementById('modalBackdrop');
 const modalBody = document.getElementById('modalBody');
 const closeModalBtn = document.getElementById('closeModal');
 const badgeContainer = document.getElementById('badgeContainer');
+const startWizardBtn = document.getElementById('startWizard');
+const prevDimBtn = document.getElementById('prevDim');
+const nextDimBtn = document.getElementById('nextDim');
 
 let focusIndex = 0;
 let confettiTimer;
+const blockDone = {};
 
 function buildMenu() {
   const dims = getDimensions();
   sideMenu.innerHTML = '';
+  const welcomeBtn = document.createElement('button');
+  welcomeBtn.innerHTML = '🏁 Inicio';
+  welcomeBtn.addEventListener('click', () => document.getElementById('welcomeCard').scrollIntoView({ behavior: 'smooth' }));
+  sideMenu.appendChild(welcomeBtn);
   dims.forEach((dim, idx) => {
     const btn = document.createElement('button');
     btn.innerHTML = `${dim.icon} ${dim.short}`;
@@ -84,13 +94,14 @@ function renderWizard() {
   const { start, end } = blockRange(blockIdx);
   const questions = dim.blocks[blockIdx].questions.map((text, i) => ({ text, index: start + i }));
   questionContainer.innerHTML = '';
+  focusIndex = start;
   questions.forEach((q, localIdx) => {
     const card = document.createElement('div');
     card.className = 'question';
     card.tabIndex = 0;
     card.setAttribute('aria-label', `Pregunta ${q.index + 1} sobre ${dim.title}`);
     card.dataset.qindex = q.index;
-    card.addEventListener('focus', () => (focusIndex = q.index));
+    card.addEventListener('focus', () => { focusIndex = q.index; updateBreadcrumb(); });
 
     const title = document.createElement('h4');
     title.innerHTML = `<span class="tag">${dim.short}</span> ${q.index + 1}. ${q.text} <span class="pill-sm" title="Ejemplo: documenta, mide y ajusta. Relevancia: aporta al índice de madurez.">ℹ</span>`;
@@ -131,13 +142,14 @@ function selectAnswer(dimId, qIndex, val) {
   showToast(`Guardado: pregunta ${qIndex + 1} = ${val}`);
   updateBlockProgress();
   updateGlobal();
+  maybeMilestones(dimId);
 }
 
 function updateBreadcrumb() {
   const dim = getDimensions()[getCurrentDim()];
   const blockIdx = getCurrentBlock();
   const { start, end } = blockRange(blockIdx);
-  wizardBreadcrumb.textContent = `Dimensión ${getCurrentDim() + 1} › ${dim.title} › Pregunta ${start + 1}-${end + 1} / 30`;
+  wizardBreadcrumb.textContent = `Dimensión ${getCurrentDim() + 1} › ${dim.title} › Pregunta ${focusIndex + 1}/30`;
   blockChip.textContent = `Bloque ${blockIdx + 1} de 3`;
   blockName.textContent = dim.blocks[blockIdx].name;
   blockBreadcrumb.textContent = `Preguntas ${start + 1}-${end + 1}`;
@@ -160,10 +172,36 @@ function updateNavigation() {
   };
 }
 
+function navigateDim(delta) {
+  const next = getCurrentDim() + delta;
+  if (next < 0 || next >= getDimensions().length) return;
+  setCurrentDim(next);
+  setCurrentBlock(0);
+  buildMenu();
+  renderWizard();
+  updateBreadcrumb();
+  miniPlaceholders();
+  destroyMiniCharts();
+  document.getElementById('welcomeCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
 function updateBlockProgress() {
   const dim = getDimensions()[getCurrentDim()];
   const answered = blockAnswered(dim.id, getCurrentBlock());
   blockProgressBar.style.width = `${(answered / 10) * 100}%`;
+  const blockKey = `${dim.id}-${getCurrentBlock()}`;
+  if (answered === 10 && !blockDone[blockKey]) {
+    showToast('✓ Bloque completado · Excelente, avanza al siguiente.');
+    blockDone[blockKey] = true;
+  }
+  blockFeedback.textContent = answered === 10 ? 'Bloque completo · puedes pasar al siguiente' : `Progreso del bloque: ${answered}/10`;
+}
+
+function maybeMilestones(dimId) {
+  const answered = countAnswered(dimId);
+  if (answered === 10 || answered === 20 || answered === 30) {
+    showToast(`${answered}/30 · ¡Vas muy bien!`);
+  }
 }
 
 function updateGlobal() {
@@ -174,6 +212,9 @@ function updateGlobal() {
   const submittedCount = getDimensions().filter(d => isSubmitted(d.id)).length;
   dimsDone.textContent = `${submittedCount} / 6`;
   if (pct === 100) { globalStatus.textContent = 'Madurez calculada'; awardBadgeOnce('🏅 Madurez calculada'); }
+  if (submittedCount === getDimensions().length) {
+    globalStatus.textContent = 'Resultados completos (DQ / AIQ finales)';
+  }
 }
 
 function updateWizardStatus() {
@@ -181,6 +222,9 @@ function updateWizardStatus() {
   const answered = countAnswered(dim.id);
   const left = 30 - answered;
   wizardStatus.textContent = left ? `Te faltan ${left} preguntas para enviar ${dim.short}` : 'Listo para enviar';
+  document.getElementById('submitDim').disabled = left !== 0;
+  nextDimBtn.disabled = getCurrentDim() === getDimensions().length - 1;
+  prevDimBtn.disabled = getCurrentDim() === 0;
 }
 
 function updatePending() {
@@ -238,12 +282,18 @@ function updateInsights(scores) {
     const bestIdx = dimScore.blocks.indexOf(Math.max(...dimScore.blocks));
     const worstIdx = dimScore.blocks.indexOf(Math.min(...dimScore.blocks));
     const detail = `Fuerte: ${blockLabels[bestIdx]} · Brecha: ${blockLabels[worstIdx]}`;
+    const guidance = level.key === 'bajo'
+      ? 'Activa controles mínimos, define dueños y cubre riesgos críticos.'
+      : level.key === 'intermedio'
+        ? 'Escala pilotos, formaliza métricas y cierra brechas de gobierno.'
+        : 'Optimiza, comparte buenas prácticas y refuerza resiliencia y ética.';
     card.innerHTML = `
       <div class="insight-head">
         <div>${dimensions[idx].icon} ${dimScore.title}</div>
         <span class="level ${level.key}">${level.label}</span>
       </div>
       <div class="breadcrumb">${subLevelText}</div>
+      <p>${level.text} ${detail}. ${guidance}</p>
       <p>${level.text} ${detail}.</p>
     `;
     dimensionInsights.appendChild(card);
@@ -287,6 +337,9 @@ function updateResults(scores) {
   resultStatus.textContent = 'Actualizado';
   const heroScore = document.querySelector('.hero-score');
   heroScore.innerHTML = `DQ ${scores.dq}% <small>· AIQ ${scores.aiq}%</small>`;
+  const best = scores.dimScores.reduce((a, b) => (b.score > a.score ? b : a), scores.dimScores[0]);
+  const worst = scores.dimScores.reduce((a, b) => (b.score < a.score ? b : a), scores.dimScores[0]);
+  finalSummary.textContent = `Fortaleza: ${best.title} (${best.score}%). Brecha crítica: ${worst.title} (${worst.score}%). Benchmark sector DQ ${benchmarks.sector.dq}% / líderes ${benchmarks.leaders.dq}%.`;
 }
 
 function awardBadgeOnce(label) {
@@ -356,6 +409,9 @@ document.addEventListener('keydown', handleKeyboard);
 document.getElementById('submitDim').addEventListener('click', submitDimension);
 document.getElementById('generateZip').addEventListener('click', generateZip);
 document.getElementById('downloadPdf').addEventListener('click', downloadPdf);
+startWizardBtn.addEventListener('click', () => document.getElementById('blockBreadcrumb').scrollIntoView({ behavior: 'smooth', block: 'start' }));
+prevDimBtn.addEventListener('click', () => navigateDim(-1));
+nextDimBtn.addEventListener('click', () => navigateDim(1));
 
 document.getElementById('questionContainer').addEventListener('mouseover', e => {
   const btn = e.target.closest('button[data-value]');

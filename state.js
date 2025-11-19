@@ -61,6 +61,14 @@ export function computeScores() {
   const dimScores = dimensions.map(dim => {
     const answers = getResponsesFor(dim.id);
     const values = Array.from({ length: 30 }, (_, i) => answers[i] ?? 0);
+    const normalized = values.map(v => Math.max(0, (v - 1) * 25));
+    const average = normalized.reduce((a, b) => a + b, 0) / normalized.length;
+    const blocks = dim.blocks.map((_, idx) => {
+      const slice = normalized.slice(idx * 10, idx * 10 + 10);
+      const avg = slice.reduce((a, b) => a + b, 0) / slice.length;
+      return Math.round(avg);
+    });
+    return { id: dim.id, title: dim.title, short: dim.short, color: dim.color, score: Math.round(average), blocks };
     const average = values.reduce((a, b) => a + b, 0) / values.length;
     const blocks = dim.blocks.map((_, idx) => {
       const slice = values.slice(idx * 10, idx * 10 + 10);

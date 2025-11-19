@@ -49,7 +49,8 @@ export function renderMainCharts(scores) {
         datasets: [
           { label: 'Empresa', data: [scores.dq, scores.aiq], backgroundColor: 'rgba(37,99,235,0.8)' },
           { label: 'Sector', data: [benchmarks.sector.dq, benchmarks.sector.aiq], backgroundColor: 'rgba(148,163,253,0.8)' },
-          { label: 'Líderes', data: [benchmarks.leaders.dq, benchmarks.leaders.aiq], backgroundColor: 'rgba(34,197,94,0.8)' }
+          { label: 'Líderes', data: [benchmarks.leaders.dq, benchmarks.leaders.aiq], backgroundColor: 'rgba(34,197,94,0.8)' },
+          { label: 'Promedio histórico', data: [benchmarks.previous.dq, benchmarks.previous.aiq], backgroundColor: 'rgba(234,179,8,0.8)' }
         ]
       },
       options: baseBarOptions(true)

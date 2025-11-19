@@ -168,6 +168,45 @@
     <button class="download" id="downloadPdf">⬇️ Descargar reporte PDF</button>
   </aside>
   <main>
+    <section class="card" id="welcomeCard" aria-label="Bienvenida">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Bienvenida · Tab 0</div>
+          <div class="card-subtitle">6 dimensiones · 30 preguntas cada una · Escala 1–5 · Tiempo estimado 18–25 min</div>
+        </div>
+        <span class="chip">Tu progreso se guarda automáticamente</span>
+      </div>
+      <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap:10px;">
+        <div class="insight-card">
+          <strong>Indicaciones</strong>
+          <ul class="list">
+            <li>Completa 30 preguntas por dimensión (bloques de 10).</li>
+            <li>Responde con la escala 1–5 (1 = no se hace, 5 = optimizado).</li>
+            <li>Puedes navegar libremente entre dimensiones sin perder respuestas.</li>
+          </ul>
+        </div>
+        <div class="insight-card">
+          <strong>Navegación</strong>
+          <ul class="list">
+            <li>Pestañas laterales, botones Anterior/Siguiente y scroll suave en cada bloque.</li>
+            <li>Atajos: números 1–5 para seleccionar, flechas para subir/bajar, PageUp/PageDown para bloques.</li>
+            <li>Hover en 4/5 muestra el significado exacto.</li>
+          </ul>
+        </div>
+        <div class="insight-card">
+          <strong>Envío y resultados</strong>
+          <ul class="list">
+            <li>Botón Enviar dimensión se habilita al responder las 30 preguntas.</li>
+            <li>Verás modal de confirmación, micro-radar, termómetro y badges.</li>
+            <li>Radar global, DQ, AIQ y benchmark se activan tras el primer envío.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="wizard-controls" style="margin-top:12px;">
+        <button class="btn" id="startWizard">Iniciar evaluación</button>
+      </div>
+    </section>
+
     <header class="hero">
       <div>
         <h1>Cuestionario de madurez digital & IA</h1>
@@ -214,10 +253,15 @@
               <div class="progress"><div class="progress-bar" id="blockProgressBar"></div></div>
             </div>
           </div>
+          <div class="status" id="blockFeedback">Completa las 10 preguntas del bloque para continuar.</div>
           <div class="question-list" id="questionContainer" aria-live="polite"></div>
           <div class="wizard-controls">
             <button class="btn secondary" id="prevBtn">← Anterior</button>
             <button class="btn" id="nextBtn">Siguiente →</button>
+          </div>
+          <div class="wizard-controls">
+            <button class="btn secondary" id="prevDim">← Volver a la dimensión anterior</button>
+            <button class="btn" id="nextDim">Guardar y continuar a la siguiente dimensión →</button>
           </div>
           <div class="wizard-controls">
             <button class="btn" id="submitDim">Enviar dimensión</button>
@@ -258,6 +302,7 @@
         <div class="chip" id="resultStatus">En espera</div>
       </div>
       <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(280px,1fr));" id="resultsCharts"></div>
+      <div class="status" id="finalSummary">Envía al menos una dimensión para activar radar, DQ, AIQ y benchmark.</div>
     </section>
 
     <section class="card" style="margin-top:14px;" id="actionsCard">
