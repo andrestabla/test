@@ -12,6 +12,10 @@ Aplicación web modular para gestionar usuarios, aplicar cuestionarios MD-IA, al
 ```bash
 python -m venv .venv
 source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+Los paquetes listados cubren Flask y la extensión de base de datos utilizada en la aplicación.
 pip install flask flask_sqlalchemy
 ```
 
