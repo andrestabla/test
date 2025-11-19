@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Batería MD-IA (AlgoritmoT) – Cuestionario interactivo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <style>
+    :root {
+      --bg: #0b1021;
+      --card: #0f172a;
+      --panel: #11182f;
+      --border: #1e293b;
+      --accent: #2563eb;
+      --accent-2: #22c55e;
+      --accent-3: #06b6d4;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --shadow: 0 24px 60px rgba(0,0,0,0.45);
+      --radius: 18px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: radial-gradient(circle at 20% 20%, #0f172a 0%, #020617 60%);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 20px 12px 36px;
+    }
+    .layout { max-width: 1280px; margin: 0 auto; }
+    header {
+      background: linear-gradient(120deg, rgba(37,99,235,0.12), rgba(6,182,212,0.12));
+      border: 1px solid rgba(59,130,246,0.25);
+      border-radius: 22px;
+      padding: 18px;
+      box-shadow: var(--shadow);
+      display: grid;
+      gap: 10px;
+      grid-template-columns: minmax(0,2.2fr) minmax(280px,1fr);
+    }
+    h1 { font-size: 24px; font-weight: 600; margin-bottom: 6px; }
+    p { color: var(--muted); line-height: 1.4; }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.06);
+      color: var(--muted);
+      border-radius: 999px;
+      font-size: 12px;
+    }
+    .badge { width: 10px; height: 10px; border-radius: 999px; background: var(--accent-2); }
+    .hero-score { font-size: 32px; font-weight: 700; }
+    .hero-score small { font-size: 14px; color: var(--muted); font-weight: 500; margin-left: 4px; }
+    .hero-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap: 10px; margin-top: 10px; }
+    .stat {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      padding: 12px;
+      border-radius: var(--radius);
+    }
+    .stat label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+    .stat strong { font-size: 18px; }
+    .download {
+      margin-top: 10px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: linear-gradient(120deg, rgba(37,99,235,0.18), rgba(34,197,94,0.14));
+      border: 1px solid rgba(59,130,246,0.35);
+      color: #e2e8f0;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 14px;
+      box-shadow: 0 12px 30px rgba(37,99,235,0.25);
+    }
+    .download:hover { filter: brightness(1.05); }
+    nav.tabs {
+      margin-top: 16px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      padding: 6px;
+      border-radius: 14px;
+      position: sticky;
+      top: 8px;
+      z-index: 10;
+      backdrop-filter: blur(10px);
+    }
+    .tab-btn {
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      padding: 10px 12px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.15s ease-in-out;
+      font-size: 13px;
+    }
+    .tab-btn.active { background: var(--card); color: var(--text); border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(0,0,0,0.28); }
+    .panel { display: none; margin-top: 14px; }
+    .panel.active { display: block; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 14px 16px;
+      box-shadow: var(--shadow);
+    }
+    .card + .card { margin-top: 12px; }
+    .card-header { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+    .card-title { font-size: 16px; font-weight: 600; }
+    .card-subtitle { color: var(--muted); font-size: 13px; }
+    .progress {
+      width: 100%;
+      height: 9px;
+      background: #0b1221;
+      border-radius: 999px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      margin-top: 6px;
+    }
+    .progress-bar { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent-2)); width: 0%; transition: width 0.25s ease; }
+    .grid { display: grid; gap: 12px; }
+    .grid-2 { grid-template-columns: minmax(0,1.4fr) minmax(260px,1fr); }
+    .question-list { display: grid; gap: 10px; margin-top: 10px; }
+    .question {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      padding: 10px 12px;
+      border-radius: 14px;
+    }
+    .question h4 { font-size: 13px; margin-bottom: 8px; }
+    .options { display: grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 6px; }
+    .options label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 10px;
+      padding: 6px 8px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    .options input { accent-color: var(--accent); }
+    button.submit {
+      margin-top: 12px;
+      background: linear-gradient(120deg, var(--accent), var(--accent-3));
+      color: #0b1021;
+      border: none;
+      padding: 12px 14px;
+      border-radius: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      width: 100%;
+      box-shadow: 0 16px 40px rgba(37,99,235,0.35);
+    }
+    .status { margin-top: 8px; font-size: 12px; color: var(--muted); }
+    .chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 999px; background: rgba(255,255,255,0.04); border: 1px solid var(--border); font-size: 12px; }
+    .chart-wrap { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px; }
+    .muted { color: var(--muted); }
+    .flex { display: flex; align-items: center; gap: 10px; }
+    .small { font-size: 12px; }
+    #dimensionInsights, #actionsContainer { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+    .insight-card { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px; display: grid; gap: 6px; }
+    .insight-head { display: flex; justify-content: space-between; gap: 10px; align-items: center; }
+    .level { padding: 4px 8px; border-radius: 999px; font-size: 12px; border: 1px solid var(--border); }
+    .level.bajo { background: rgba(239,68,68,0.15); border-color: rgba(239,68,68,0.3); color: #fca5a5; }
+    .level.intermedio { background: rgba(245,158,11,0.15); border-color: rgba(245,158,11,0.3); color: #fcd34d; }
+    .level.alto { background: rgba(34,197,94,0.18); border-color: rgba(34,197,94,0.35); color: #bbf7d0; }
+    .action-card { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px; display: grid; gap: 8px; }
+    .pill-sm { display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; border-radius: 999px; background: rgba(255,255,255,0.04); border: 1px solid var(--border); font-size: 11px; }
+    .list { padding-left: 18px; color: var(--muted); font-size: 12px; }
+    @media (max-width: 920px) {
+      header { grid-template-columns: 1fr; }
+      .grid-2 { grid-template-columns: 1fr; }
+      nav.tabs { position: static; }
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <header>
+      <div>
+        <h1>Batería de preguntas MD-IA (AlgoritmoT)</h1>
+        <p>Encuesta interactiva de 180 preguntas (6 dimensiones). Usa la escala 1–5: 1 = No se hace, 5 = Totalmente optimizado. Envía cada dimensión para generar el tablero de resultados, DQ y AIQ.</p>
+        <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
+          <span class="pill"><span class="badge"></span> Cuestionario completo (30 preguntas por dimensión)</span>
+          <span class="pill">Dashboard dinámico · Radar + barras</span>
+          <span class="pill">Cálculo DQ / AIQ (ponderación sugerida)</span>
+        </div>
+        <button type="button" class="download" id="downloadZip">
+          Generar paquete offline
+        </button>
+        <div class="small muted" id="downloadStatus">Genera el paquete sin descargar archivos binarios del repositorio.</div>
+      </div>
+      <div>
+        <div class="stat" style="margin-bottom:8px;">
+          <label>Progreso general</label>
+          <div class="hero-score" id="progressPercent">0%</div>
+          <div class="progress"><div class="progress-bar" id="progressBar"></div></div>
+          <div class="small muted" id="progressDetail">0 de 180 respuestas registradas</div>
+        </div>
+        <div class="hero-grid">
+          <div class="stat">
+            <label>Dimensiones enviadas</label>
+            <strong id="dimsSubmitted">0 / 6</strong>
+            <div class="small muted">Requiere 30 respuestas por dimensión</div>
+          </div>
+          <div class="stat">
+            <label>DQ (Digital Quotient)</label>
+            <strong id="dqScore">—</strong>
+            <div class="small muted" id="dqNote">Esperando envíos</div>
+          </div>
+          <div class="stat">
+            <label>AIQ (AI Quotient)</label>
+            <strong id="aiqScore">—</strong>
+            <div class="small muted" id="aiqNote">Ponderación IA aplicada</div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <nav class="tabs" id="tabs"></nav>
+
+    <section class="panel active" id="panel-resumen">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Tablero de progreso por dimensión</div>
+            <div class="card-subtitle">Visualiza cuánto falta por completar cada bloque antes de enviarlo.</div>
+          </div>
+        </div>
+        <div class="grid" id="dimensionProgress"></div>
+      </div>
+    </section>
+
+    <div id="panels"></div>
+
+    <section class="panel" id="panel-resultados">
+      <div class="grid grid-2">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Radar de madurez por dimensión</div>
+              <div class="card-subtitle">Actualiza cada vez que envías una dimensión.</div>
+            </div>
+            <span class="chip" id="resultStatus">Pendiente de envíos</span>
+          </div>
+          <div class="chart-wrap"><canvas id="radarChart"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">DQ y AIQ vs avance</div>
+              <div class="card-subtitle">Promedio (DQ) y ponderación IA (AIQ).</div>
+            </div>
+          </div>
+          <div class="chart-wrap"><canvas id="barChart"></canvas></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Resultados por dimensión</div>
+            <div class="card-subtitle">Análisis e interpretación automática al enviar cada bloque.</div>
+          </div>
+          <span class="chip">Niveles: Bajo · Intermedio · Alto</span>
+        </div>
+        <div class="grid" id="dimensionInsights"></div>
+      </div>
+    </section>
+
+    <section class="panel" id="panel-acciones">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Líneas de acción sugeridas</div>
+            <div class="card-subtitle">Quick wins y próximos pasos para cerrar brechas según las respuestas.</div>
+          </div>
+          <span class="chip" id="actionStatus">Esperando envíos</span>
+        </div>
+        <div class="grid" id="actionsContainer"></div>
+      </div>
+    </section>
+  </div>
+
+<script>
+  const dimensions = [
+    { id: 'estrategia', name: 'Estrategia', weightAIQ: 0.25 },
+    { id: 'infra', name: 'Infraestructura & Datos', weightAIQ: 0.30 },
+    { id: 'talento', name: 'Talento & Cultura', weightAIQ: 0.10 },
+    { id: 'gob', name: 'Gobernanza & Liderazgo', weightAIQ: 0.25 },
+    { id: 'procesos', name: 'Procesos & Automatización', weightAIQ: 0.05 },
+    { id: 'cx', name: 'Experiencia del cliente', weightAIQ: 0.05 },
+  ];
+
+  const questions = {
+    estrategia: [
+      '¿Existe una visión y misión formalmente definidas que incluyan transformación digital e IA?',
+      '¿La estrategia digital está documentada y aprobada por la alta dirección?',
+      '¿La estrategia digital e IA se revisa y actualiza periódicamente?',
+      '¿Los objetivos digitales se encuentran alineados a las metas de negocio (crecimiento, rentabilidad, experiencia cliente, etc.)?',
+      '¿Hay un portafolio de iniciativas digitales priorizado basado en valor y factibilidad?',
+      '¿La alta dirección participa activamente en iniciativas digitales (patrocinio)?',
+      '¿Se cuenta con roles dedicados a impulsar la transformación digital (p.ej., Chief Digital Officer)?',
+      '¿La estrategia digital contempla una hoja de ruta de adopción de IA?',
+      '¿Se han definido indicadores (KPIs) para medir el avance de la estrategia digital?',
+      '¿La empresa tiene un presupuesto específico para proyectos digitales e IA?',
+      '¿Se aprovechan alianzas con startups, universidades o proveedores tecnológicos para acelerar la transformación?',
+      '¿Se consideran oportunidades de nuevos modelos de negocio digitales (suscripciones, plataformas, servicios basados en datos)?',
+      '¿La estrategia digital incluye experimentación y pilotos de tecnologías emergentes (IoT, IA generativa, blockchain)?',
+      '¿Se evalúan los riesgos digitales (ciberseguridad, privacidad, impactos éticos) como parte de la estrategia?',
+      '¿Se articulan iniciativas digitales con la estrategia de sostenibilidad/responsabilidad social?',
+      '¿Existe un roadmap específico de adopción de IA alineado a procesos clave?',
+      '¿Se han identificado casos de uso de IA prioritarios con impacto en el negocio?',
+      '¿Se evalúa el retorno de inversión de proyectos de IA y se comunica a la dirección?',
+      '¿Se contemplan aspectos de gobernanza y ética de datos/IA en la estrategia?',
+      '¿La estrategia incluye planes para escalar la IA a otras áreas una vez probada?',
+      '¿La visión digital e IA está comunicada a todos los niveles de la organización?',
+      '¿Existe un programa de difusión interna de logros y aprendizajes digitales?',
+      '¿La estrategia contempla cómo gestionar el cambio cultural derivado de la digitalización?',
+      '¿Se involucra a los clientes/usuarios en la definición de la estrategia digital (co-creación)?',
+      '¿Se realiza vigilancia competitiva y de tendencias para ajustar la estrategia?',
+      '¿La estrategia considera escenarios de crisis y resiliencia digital (continuidad de operaciones)?',
+      '¿Se integran aprendizajes de proyectos anteriores en la planificación futura?',
+      '¿Se definen objetivos de madurez digital y métricas (DQ) para ser alcanzados en periodos concretos?',
+      '¿La estrategia incorpora IA para optimizar procesos internos además de la experiencia del cliente?',
+      '¿La estrategia digital está alineada con la estrategia de datos e infraestructura?'
+    ],
+    infra: [
+      '¿La infraestructura tecnológica está documentada (redes, servidores, nube, on-premise)?',
+      '¿Se utilizan servicios en la nube (IaaS/PaaS/SaaS) para habilitar escalabilidad y rapidez?',
+      '¿La organización tiene un data lake o repositorio centralizado de datos?',
+      '¿Se integran datos de diferentes fuentes en un repositorio unificado?',
+      '¿Existen diccionarios de datos y modelos de datos documentados?',
+      '¿Hay políticas y procedimientos para asegurar la calidad de los datos (limpieza, deduplicación)?',
+      '¿Se realizan auditorías periódicas de la calidad de los datos?',
+      '¿La organización cuenta con un equipo de gestión de datos (arquitecto de datos, steward)?',
+      '¿Se tienen protocolos de catalogación y clasificación de datos (metadatos)?',
+      '¿Existen controles de ciberseguridad (firewalls, IDS, cifrado) y están certificados?',
+      '¿Se cuenta con un plan de continuidad de negocio y recuperación ante desastres para sistemas críticos?',
+      '¿Los accesos a sistemas y bases de datos se gestionan mediante políticas de identidad y privilegios mínimos?',
+      '¿Se realiza capacitación en seguridad de la información al personal?',
+      '¿Se usan herramientas de inteligencia de negocios (BI) para visualizar datos?',
+      '¿Existen entornos de análisis de datos avanzados (notebooks, servidores de ML) accesibles para el equipo?',
+      '¿Se dispone de una plataforma para desarrollar, probar y desplegar modelos de IA (MLOps)?',
+      '¿Hay pipelines automatizados para ingesta, preparación y actualización de datos?',
+      '¿Se usan servicios de bases de datos en la nube (relacionales y NoSQL) de forma eficiente?',
+      '¿Los sistemas de TI están integrados (middleware, APIs) para evitar silos de información?',
+      '¿Existe un catálogo de APIs disponibles para consumo interno/externo?',
+      '¿Las herramientas de software y datos utilizados cuentan con licencias y permisos adecuados?',
+      '¿Se monitorea el desempeño de la infraestructura (uso de recursos, tiempos de respuesta)?',
+      '¿Los datos disponibles son suficientes para entrenar modelos de IA?',
+      '¿Se sigue un proceso para etiquetar datos (data labeling) cuando se requiere?',
+      '¿Hay procedimientos para anonimizar o seudonimizar datos sensibles?',
+      '¿Se rigen por políticas de gobernanza de datos (quién crea, consume, elimina)?',
+      '¿Existen acuerdos de nivel de servicio (SLAs) claros para plataformas de datos?',
+      '¿Se evalúan periódicamente los proveedores de infraestructura y plataformas de datos?',
+      '¿Se implementan soluciones de gestión de identidades y accesos (IAM) con autenticación multifactor?',
+      '¿La organización tiene un marco de trabajo de ciberseguridad alineado a estándares (ISO 27001, NIST)?'
+    ],
+    talento: [
+      '¿La mayoría del personal maneja herramientas digitales básicas (ofimática, plataformas colaborativas)?',
+      '¿Se realizan programas continuos de formación en habilidades digitales y de datos?',
+      '¿La organización ofrece capacitación en metodologías ágiles y design thinking?',
+      '¿Se capacita a los empleados en fundamentos de IA y analítica avanzada?',
+      '¿Se cuenta con estrategias para atraer talento digital (reclutamiento especializado, ferias tecnológicas)?',
+      '¿Se contratan perfiles en ciencia de datos, ingeniería de datos y arquitectura de nube?',
+      '¿Existen programas de desarrollo de carrera y reconocimiento para retener talento digital?',
+      '¿La estructura salarial incentiva la retención de perfiles técnicos críticos?',
+      '¿Los equipos colaboran entre sí (no existen silos funcionales)?',
+      '¿Se promueven comunidades de práctica o capítulos internos de analítica y tecnología?',
+      '¿Se fomenta el aprendizaje continuo (acceso a cursos, certificaciones, conferencias)?',
+      '¿La organización adopta metodologías ágiles (scrum, kanban) en proyectos digitales?',
+      '¿Los equipos multidisciplinarios son permanentes (squads) o se forman ad hoc?',
+      '¿Existe apertura al cambio y tolerancia a la experimentación/fracaso?',
+      '¿La cultura recompensa la generación de ideas y la resolución creativa de problemas?',
+      '¿Se impulsa la diversidad de género, edad y perspectivas en los equipos digitales?',
+      '¿Existe un programa de gestión del cambio para acompañar la digitalización?',
+      '¿El liderazgo comunica consistentemente la importancia de la transformación digital?',
+      '¿Se incentiva la participación del talento en eventos o hackatones externos?',
+      '¿Se detectan barreras culturales al adoptar nuevas tecnologías?',
+      '¿Existe mentoría o coaching para desarrollar habilidades digitales entre equipos?',
+      '¿Se promueve el balance vida-trabajo en proyectos digitales (evitando burnout)?',
+      '¿Los empleados reciben capacitación sobre ética digital, privacidad y uso responsable de IA?',
+      '¿Hay una política de comunicación abierta para reportar riesgos o malas prácticas digitales?',
+      '¿La organización participa en comunidades de código abierto o foros de best practices?',
+      '¿Se ofrecen modalidades de trabajo flexible (remoto/híbrido) para atraer talento digital?',
+      '¿El área de RR.HH. tiene competencias en gestión del talento digital?',
+      '¿Se revisan los modelos de IA para evitar sesgos y se involucra al equipo en la revisión?',
+      '¿Se miden tasas de rotación en perfiles digitales y se analizan sus causas?',
+      '¿La cultura digital está alineada con valores éticos y de responsabilidad social?'
+    ],
+    gob: [
+      '¿Existe un comité o consejo de transformación digital e IA?',
+      '¿Se han definido roles y responsabilidades claras para la gobernanza digital (director digital, owner de producto, etc.)?',
+      '¿La gobernanza digital forma parte del gobierno corporativo general?',
+      '¿Las decisiones de inversión digital se aprueban en base a criterios establecidos (ROI, riesgo, alineación estratégica)?',
+      '¿Se tienen políticas de datos (acceso, custodia, privacidad) aprobadas y comunicadas?',
+      '¿Existe un código ético para el uso de IA y datos personales?',
+      '¿Las políticas de TI incluyen lineamientos para la adquisición y desactivación de sistemas?',
+      '¿Se identifican, analizan y gestionan los riesgos digitales (ciberataques, obsolescencia, cumplimiento)?',
+      '¿Hay un equipo responsable de continuidad de negocio y gestión de crisis digitales?',
+      '¿Se definen indicadores de desempeño digital e IA (KPIs) y se monitorean regularmente?',
+      '¿Existe un sistema de reportes o dashboard para gobernanza (real-time o periódicos) con acceso a la dirección?',
+      '¿Los proyectos digitales tienen un modelo de financiación claro (centro de costos o inversión estratégica)?',
+      '¿Se realizan auditorías internas o externas de cumplimiento digital/IA?',
+      '¿Hay un comité específico para revisar proyectos de IA (validación de modelos, ética)?',
+      '¿Se controla formalmente el impacto de cambios tecnológicos sobre procesos y roles?',
+      '¿La gobernanza contempla la protección de derechos de propiedad intelectual en desarrollos digitales?',
+      '¿Los directivos reciben reportes frecuentes sobre el estado de la transformación?',
+      '¿Se establecen acuerdos de nivel de servicio y contratos para asegurar la calidad con proveedores de tecnología?',
+      '¿La gobernanza digital interactúa con áreas de cumplimiento (legal, regulatorio) para asegurar alineación?',
+      '¿Se incluye la dimensión de talento y cultura en la gobernanza (comité de talento digital)?',
+      '¿Se revisan proyectos fallidos para extraer lecciones y evitar repetir errores?',
+      '¿Se mantiene un inventario y registro de activos de datos críticos?',
+      '¿Se asignan responsables (data owners) para cada conjunto de datos?',
+      '¿Se comunican al negocio las decisiones de gobernanza y su racional?',
+      '¿Los responsables de la toma de decisiones disponen de información en tiempo real para sus deliberaciones?',
+      '¿La gobernanza fomenta la coordinación entre áreas (por ejemplo, planeación, TI, operaciones, marketing)?',
+      '¿Se actualizan las políticas digitales en función de nuevas leyes (protección de datos, IA, ciberseguridad)?',
+      '¿Se contempla la contratación de asesoría externa para temas específicos de gobernanza o ciberseguridad?',
+      '¿El comité de gobernanza revisa periódicamente la alineación de iniciativas de IA con objetivos y riesgos?',
+      '¿La alta dirección impulsa una cultura de datos apoyada en la gobernanza (data-driven)?'
+    ],
+    procesos: [
+      '¿Los procesos clave están identificados y documentados (mapas de procesos)?',
+      '¿Existe un equipo responsable de la mejora continua de procesos?',
+      '¿Se utilizan herramientas de mapeo y análisis de procesos (BPMN, process mining)?',
+      '¿Los flujos de trabajo están estandarizados en toda la organización?',
+      '¿Se han implementado soluciones de automatización (p.ej., RPA) para tareas repetitivas?',
+      '¿Se utilizan chatbots u otros asistentes digitales para automatizar tareas de atención?',
+      '¿Se aplica IA para mejorar la eficiencia de procesos (predicción de demanda, mantenimiento predictivo)?',
+      '¿Los procesos automatizados se integran con sistemas existentes (ERP/CRM/BPM)?',
+      '¿Se realizan pilotos de automatización con control de impacto antes de escalar?',
+      '¿Se mide el retorno de inversión y la reducción de tiempos/costos tras automatizar un proceso?',
+      '¿Los cambios en procesos se implementan de manera ágil (iteraciones cortas)?',
+      '¿La organización mantiene manuales de procedimientos actualizados?',
+      '¿Se tienen indicadores de desempeño de procesos (tiempos de ciclo, errores, productividad)?',
+      '¿Los procesos se revisan periódicamente para optimizarlos (lean, six sigma)?',
+      '¿Las automatizaciones están diseñadas para escalar a más áreas o volumen?',
+      '¿La automatización está orientada a complementar el trabajo humano en lugar de reemplazarlo sin preparación?',
+      '¿Se capacita al personal para trabajar con herramientas de automatización e IA?',
+      '¿Se utilizan plataformas de orquestación de procesos inteligentes (incluyendo IA)?',
+      '¿Los resultados de procesos automatizados se integran en dashboards de gestión en tiempo real?',
+      '¿Existen políticas para la gestión de bots de RPA (ciclo de vida, permisos, mantenimiento)?',
+      '¿La priorización de procesos a automatizar se basa en criterios claros (volumen, valor, complejidad)?',
+      '¿Se evalúan riesgos operativos y de seguridad antes de automatizar?',
+      '¿Se comunican al personal las actividades automatizadas y sus implicaciones?',
+      '¿Hay mecanismos para monitorear y corregir automatizaciones cuando producen resultados erróneos?',
+      '¿Se emplean analíticas avanzadas para identificar cuellos de botella y oportunidades de automatización?',
+      '¿Los procesos integran recomendaciones de IA en tiempo real para la toma de decisiones?',
+      '¿Se emplean reglas de negocio automatizadas para gestionar procesos (decision engines)?',
+      '¿Las soluciones de automatización son compatibles con múltiples plataformas y aplicaciones?',
+      '¿Se realiza benchmarking interno y externo para identificar mejores prácticas de automatización?',
+      '¿Existe un roadmap de automatización con hitos, responsables y recursos asignados?'
+    ],
+    cx: [
+      '¿La organización tiene mapeados los journeys del cliente (customer journey maps)?',
+      '¿Se recolectan datos en todos los puntos de contacto (tienda, web, app, call center)?',
+      '¿Se utilizan plataformas omnicanal (CRM, CDP) para gestionar la relación con el cliente?',
+      '¿Los canales digitales ofrecen una experiencia coherente con los canales físicos?',
+      '¿Se segmenta a los clientes y se personalizan ofertas y contenidos?',
+      '¿Se emplea IA para recomendaciones (p.ej., motores de recomendación, marketing predictivo)?',
+      '¿Se utilizan bots o agentes virtuales para servicio al cliente?',
+      '¿Se miden las interacciones de los chatbots y su satisfacción?',
+      '¿Se analiza el feedback de clientes (opiniones, reseñas, redes sociales) para detectar satisfacción/dolor?',
+      '¿Existe un programa formal de gestión de feedback del cliente (NPS, encuestas de satisfacción)?',
+      '¿Los tiempos de atención al cliente se monitorean y se mejoran continuamente?',
+      '¿Las interfaces digitales cumplen estándares de accesibilidad (WCAG) para usuarios con discapacidad?',
+      '¿Las comunicaciones al cliente son consistentes y claras en todos los canales?',
+      '¿El cliente puede comenzar la interacción en un canal y continuarla en otro sin fricción?',
+      '¿Se utilizan algoritmos de detección de abandono o churn para prevenir pérdida de clientes?',
+      '¿Se aplican modelos de scoring o propensión de compra para campañas de marketing?',
+      '¿Los equipos de marketing y atención tienen dashboards con métricas de clientes en tiempo real?',
+      '¿Se realizan pruebas con usuarios para optimizar la experiencia digital?',
+      '¿Se consideran criterios de inclusividad y diversidad en el diseño de servicios?',
+      '¿Los canales digitales protegen la información del cliente (SSL, políticas de privacidad)?',
+      '¿Se comunica de manera transparente el uso de cookies y se da control al usuario?',
+      '¿Se miden indicadores como NPS, CES (Customer Effort Score) y se actúa sobre ellos?',
+      '¿Se realizan iteraciones y experimentos A/B para mejorar la experiencia?',
+      '¿Se evalúa la ética de algoritmos que interactúan con el cliente (evitar discriminación)?',
+      '¿Se usan modelos predictivos para anticipar necesidades y ofrecer soluciones antes de que el cliente contacte?',
+      '¿Los modelos de IA están integrados en diferentes canales (voz, texto, redes)?',
+      '¿Se monitorizan redes sociales y plataformas de reseñas en tiempo real para responder a incidentes?',
+      '¿Se calcula y se usa el CLV para estrategias de retención?',
+      '¿Se gestionan programas de fidelización basados en datos y analítica?',
+      '¿Existen servicios digitales para instalación, soporte y garantía que reduzcan fricción después de la venta?'
+    ]
+  };
+
+  const state = {
+    answers: {},
+    submitted: {},
+    scores: {}
+  };
+
+  const interpretations = {
+    estrategia: {
+      low: 'Falta una visión digital/IA consolidada y KPIs claros. Prioriza hoja de ruta, patrocinio ejecutivo y casos de negocio con ROI.',
+      mid: 'La estrategia existe pero requiere ajustar portafolio y medición. Alinea casos de IA al negocio y comunica avances.',
+      high: 'Visión y roadmap digitales claros. El foco es escalar IA y explorar nuevos modelos de negocio basados en datos.'
+    },
+    infra: {
+      low: 'Base tecnológica fragmentada. Urge estandarizar datos, fortalecer ciberseguridad y habilitar nube/MLops básicos.',
+      mid: 'Infraestructura en marcha; mejorar calidad de datos, integración y monitoreo para soportar IA a escala.',
+      high: 'Plataforma sólida. Enfoca en optimizar costos, automatizar pipelines y habilitar autoservicio de datos/IA.'
+    },
+    talento: {
+      low: 'Brechas de skills digitales/IA y cultura ágil. Requiere upskilling masivo y comunidades de práctica.',
+      mid: 'Talento mixto con lagunas en IA y agilidad. Refuerza rutas de carrera, coaching y tiempos para innovar.',
+      high: 'Equipos maduros. Acelera especialización en IA aplicada y programas de retención para roles críticos.'
+    },
+    gob: {
+      low: 'Gobernanza digital incipiente. Define roles, comités, políticas de datos/ética y gestión de riesgos.',
+      mid: 'Marco de gobierno activo pero incompleto. Fortalece métricas, control de cambios y revisión periódica de IA.',
+      high: 'Gobernanza consolidada. Escala transparencia, auditorías continuas y alineación con nuevas regulaciones.'
+    },
+    procesos: {
+      low: 'Procesos poco documentados y baja automatización. Prioriza mapeo, estandarización y pilotos RPA/IA.',
+      mid: 'Automatización selectiva. Expande monitoreo, ROI y orquestación para escalar sin silos.',
+      high: 'Flujos maduros. Optimiza con analítica avanzada y gobernanza de bots para mantener calidad y resiliencia.'
+    },
+    cx: {
+      low: 'Experiencia digital dispareja. Necesita datos omnicanal, NPS y fundamentos de personalización.',
+      mid: 'CX integrada con oportunidades de IA. Mejora pruebas A/B, accesibilidad y modelos de churn/propensión.',
+      high: 'CX robusta. Profundiza hiperpersonalización ética y automatiza acciones predictivas en todos los canales.'
+    }
+  };
+
+  const actionRecommendations = {
+    estrategia: {
+      low: {
+        focus: 'Fundamentos y patrocinio',
+        actions: [
+          'Formalizar visión/misión digital e IA con aprobación ejecutiva.',
+          'Priorizar portafolio de casos con KPIs y ROI estimado.',
+          'Asignar presupuesto y roadmap de IA alineado a procesos clave.'
+        ]
+      },
+      mid: {
+        focus: 'Alineación y escalamiento',
+        actions: [
+          'Comunicar avances y quick wins a toda la organización.',
+          'Refinar KPIs y gobernanza de casos de IA con criterios de valor y riesgo.',
+          'Planificar escalamiento de casos exitosos a nuevas áreas.'
+        ]
+      },
+      high: {
+        focus: 'Ecosistema y nuevos modelos',
+        actions: [
+          'Explorar alianzas con startups/universidades para innovación abierta.',
+          'Probar nuevos modelos de negocio data-driven y generativa.',
+          'Monitorear riesgos y ética en despliegues masivos de IA.'
+        ]
+      }
+    },
+    infra: {
+      low: {
+        focus: 'Base tecnológica segura',
+        actions: [
+          'Documentar arquitectura y políticas de ciberseguridad.',
+          'Implementar data lake mínimo viable con gobierno de accesos.',
+          'Habilitar herramientas BI y etiquetado de datos para IA.'
+        ]
+      },
+      mid: {
+        focus: 'Calidad y MLOps',
+        actions: [
+          'Automatizar pipelines de ingesta/limpieza con monitoreo.',
+          'Consolidar catálogo de APIs y SLAs de datos.',
+          'Desplegar plataforma MLOps con control de versiones y despliegue.'
+        ]
+      },
+      high: {
+        focus: 'Autoservicio y optimización',
+        actions: [
+          'Optimizar costos nube y performance con observabilidad.',
+          'Expandir autoservicio de datos/IA para equipos de negocio.',
+          'Evaluar periodicidad de auditorías de calidad y seguridad.'
+        ]
+      }
+    },
+    talento: {
+      low: {
+        focus: 'Upskilling urgente',
+        actions: [
+          'Programa intensivo de habilidades digitales e IA básica.',
+          'Crear comunidades de práctica y mentoring entre equipos.',
+          'Ajustar compensación/retención para roles críticos.'
+        ]
+      },
+      mid: {
+        focus: 'Especialización y agilidad',
+        actions: [
+          'Certificar líderes en metodologías ágiles y product management.',
+          'Asignar tiempo protegido para experimentación y hackatones.',
+          'Refinar rutas de carrera y evaluación de desempeño digital.'
+        ]
+      },
+      high: {
+        focus: 'Retención y IA aplicada',
+        actions: [
+          'Incentivar investigación aplicada y patentes internas.',
+          'Rotación planificada entre squads para compartir expertise.',
+          'Programas de bienestar y flexibilidad para evitar rotación.'
+        ]
+      }
+    },
+    gob: {
+      low: {
+        focus: 'Marco mínimo de control',
+        actions: [
+          'Constituir comité digital/IA con roles y responsabilidades.',
+          'Publicar políticas de datos, privacidad y ética de IA.',
+          'Implementar gestión de riesgos y continuidad de negocio.'
+        ]
+      },
+      mid: {
+        focus: 'Riesgos y métricas',
+        actions: [
+          'Integrar KPIs de transformación en tableros ejecutivos.',
+          'Auditar proyectos IA (sesgos, desempeño, cumplimiento).',
+          'Fortalecer control de cambios y propiedad de datos.'
+        ]
+      },
+      high: {
+        focus: 'Transparencia y cumplimiento',
+        actions: [
+          'Automatizar reportes de gobernanza y trazabilidad de modelos.',
+          'Alinear con nuevas normativas de IA y protección de datos.',
+          'Revisar contratos y SLAs críticos con proveedores tecnológicos.'
+        ]
+      }
+    },
+    procesos: {
+      low: {
+        focus: 'Documentar y priorizar',
+        actions: [
+          'Mapear procesos clave y definir métricas base.',
+          'Ejecutar pilotos RPA/IA en tareas repetitivas.',
+          'Alinear automatización con gestión del cambio y capacitación.'
+        ]
+      },
+      mid: {
+        focus: 'Escala y orquestación',
+        actions: [
+          'Usar process mining para identificar cuellos de botella.',
+          'Centralizar monitoreo de bots y flujos automatizados.',
+          'Medir ROI y ajustar priorización de automatizaciones.'
+        ]
+      },
+      high: {
+        focus: 'Optimización continua',
+        actions: [
+          'Incorporar IA en decisiones en tiempo real.',
+          'Asegurar interoperabilidad y resiliencia en múltiples plataformas.',
+          'Benchmarking periódico contra líderes del sector.'
+        ]
+      }
+    },
+    cx: {
+      low: {
+        focus: 'Fundamentos de omnicanalidad',
+        actions: [
+          'Mapear journeys y unificar captura de datos en todos los puntos.',
+          'Implementar medición NPS/CES y feedback continuo.',
+          'Establecer estándares de accesibilidad y coherencia de canales.'
+        ]
+      },
+      mid: {
+        focus: 'Personalización y ética',
+        actions: [
+          'Desplegar modelos de recomendación y churn con monitoreo.',
+          'A/B testing y analítica de sentimiento para iterar UX.',
+          'Políticas de transparencia sobre uso de datos y cookies.'
+        ]
+      },
+      high: {
+        focus: 'Hiperpersonalización confiable',
+        actions: [
+          'Orquestar IA en todos los canales (voz, texto, app, web).',
+          'Automatizar acciones proactivas basadas en predicción de necesidades.',
+          'Revisar sesgos y equidad en modelos de cara al cliente.'
+        ]
+      }
+    }
+  };
+
+  const downloadBtn = document.getElementById('downloadZip');
+  const downloadStatus = document.getElementById('downloadStatus');
+  const defaultReadme = `# Batería MD-IA (AlgoritmoT)
+
+Cuestionario interactivo de 180 preguntas (30 por dimensión) para evaluar madurez digital e IA. Incluye cálculo dinámico de DQ y AIQ, radar y barras de resultados.
+
+## Uso
+
+1. Pulsa "Generar paquete offline" en el dashboard. El ZIP se construye en tu navegador con los archivos actuales (sin descargar binarios del repositorio).
+2. Guarda y extrae el ZIP generado; abre \`index.html\` en tu navegador moderno (no requiere backend ni conexión una vez descargado).
+3. Responde cada dimensión en su pestaña y presiona **Enviar dimensión** para actualizar el tablero.
+4. Consulta las pestañas "Resultados" y "Líneas de acción" para revisar radar, barras, análisis por dimensión y recomendaciones.
+
+## Contenido del paquete generado
+
+- \`index.html\`: interfaz completa con preguntas, progresos, cálculos y gráficos.
+- \`README.md\`: esta guía de uso.
+`;
+
+  async function safeFetchText(path) {
+    try {
+      const res = await fetch(path);
+      if (!res.ok) throw new Error(`Status ${res.status}`);
+      return await res.text();
+    } catch (e) {
+      return null;
+    }
+  }
+
+  async function getIndexSource() {
+    const fetched = await safeFetchText('index.html');
+    if (fetched) return fetched;
+    return '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+  }
+
+  async function getReadmeSource() {
+    const fetched = await safeFetchText('README.md');
+    if (fetched) return fetched;
+    return defaultReadme;
+  }
+
+  async function generateZip() {
+    if (!window.JSZip) {
+      downloadStatus.textContent = 'No se pudo cargar JSZip desde CDN. Verifica tu conexión.';
+      return;
+    }
+    downloadBtn.disabled = true;
+    downloadBtn.textContent = 'Generando...';
+    downloadStatus.textContent = 'Preparando archivos (index.html y README.md)';
+    try {
+      const [html, readme] = await Promise.all([getIndexSource(), getReadmeSource()]);
+      const zip = new JSZip();
+      zip.file('index.html', html);
+      zip.file('README.md', readme);
+      const blob = await zip.generateAsync({ type: 'blob' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'mdia-cuestionario.zip';
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 4000);
+      downloadStatus.textContent = 'ZIP generado localmente. Ya puedes abrirlo offline.';
+    } catch (e) {
+      console.error(e);
+      downloadStatus.textContent = 'Error al generar el ZIP. Refresca la página e inténtalo de nuevo.';
+    } finally {
+      downloadBtn.disabled = false;
+      downloadBtn.textContent = 'Generar paquete offline';
+    }
+  }
+
+  const tabsNav = document.getElementById('tabs');
+  const panelsContainer = document.getElementById('panels');
+  const dimensionProgress = document.getElementById('dimensionProgress');
+
+  function createTabs() {
+    const resumenBtn = document.createElement('button');
+    resumenBtn.className = 'tab-btn active';
+    resumenBtn.textContent = '🏁 Resumen y progreso';
+    resumenBtn.dataset.target = 'panel-resumen';
+    tabsNav.appendChild(resumenBtn);
+
+    dimensions.forEach(dim => {
+      const btn = document.createElement('button');
+      btn.className = 'tab-btn';
+      btn.textContent = dim.name;
+      btn.dataset.target = `panel-${dim.id}`;
+      tabsNav.appendChild(btn);
+    });
+
+    const resultsBtn = document.createElement('button');
+    resultsBtn.className = 'tab-btn';
+    resultsBtn.textContent = '📊 Resultados';
+    resultsBtn.dataset.target = 'panel-resultados';
+    tabsNav.appendChild(resultsBtn);
+
+    const actionsBtn = document.createElement('button');
+    actionsBtn.className = 'tab-btn';
+    actionsBtn.textContent = '🚀 Líneas de acción';
+    actionsBtn.dataset.target = 'panel-acciones';
+    tabsNav.appendChild(actionsBtn);
+
+    tabsNav.addEventListener('click', (e) => {
+      if (!e.target.classList.contains('tab-btn')) return;
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+      e.target.classList.add('active');
+      const target = document.getElementById(e.target.dataset.target);
+      if (target) target.classList.add('active');
+    });
+  }
+
+  function createProgressCards() {
+    dimensionProgress.innerHTML = '';
+    dimensions.forEach(dim => {
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.id = `progress-${dim.id}`;
+      card.innerHTML = `
+        <div class="card-header">
+          <div>
+            <div class="card-title">${dim.name}</div>
+            <div class="card-subtitle" id="progress-label-${dim.id}">0/30 respuestas · Sin enviar</div>
+          </div>
+          <span class="chip" id="chip-${dim.id}">Pendiente</span>
+        </div>
+        <div class="progress"><div class="progress-bar" id="bar-${dim.id}"></div></div>
+      `;
+      dimensionProgress.appendChild(card);
+    });
+  }
+
+  function createPanels() {
+    dimensions.forEach(dim => {
+      const panel = document.createElement('section');
+      panel.className = 'panel';
+      panel.id = `panel-${dim.id}`;
+      const qList = questions[dim.id];
+      panel.innerHTML = `
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">${dim.name}</div>
+              <div class="card-subtitle">30 preguntas · completa y presiona "Enviar" para actualizar el tablero.</div>
+            </div>
+            <div class="chip" id="dim-status-${dim.id}">Sin enviar</div>
+          </div>
+          <div class="progress"><div class="progress-bar" id="dim-bar-${dim.id}"></div></div>
+          <div class="small muted" id="dim-progress-${dim.id}" style="margin-top:6px;">0 de 30 respondidas</div>
+          <div class="question-list" id="questions-${dim.id}"></div>
+          <button class="submit" data-dimension="${dim.id}">Enviar dimensión</button>
+          <div class="status" id="status-${dim.id}">Completa todas las respuestas antes de enviar.</div>
+        </div>
+      `;
+      panelsContainer.appendChild(panel);
+
+      const qContainer = panel.querySelector(`#questions-${dim.id}`);
+      qList.forEach((q, idx) => {
+        const qItem = document.createElement('article');
+        qItem.className = 'question';
+        qItem.innerHTML = `
+          <h4>${idx + 1}. ${q}</h4>
+          <div class="options">
+            ${[1,2,3,4,5].map(v => `
+              <label>
+                <input type="radio" name="${dim.id}-${idx}" value="${v}" data-dimension="${dim.id}" data-index="${idx}" />
+                <span>${v}</span>
+                <span class="muted">${labelForValue(v)}</span>
+              </label>
+            `).join('')}
+          </div>
+        `;
+        qContainer.appendChild(qItem);
+      });
+
+      panel.querySelector('button.submit').addEventListener('click', () => handleSubmit(dim.id));
+      panel.addEventListener('change', handleAnswerChange);
+    });
+  }
+
+  function labelForValue(v) {
+    const labels = {
+      1: 'No se hace / no existe',
+      2: 'Muy poco implementado',
+      3: 'Parcialmente implementado',
+      4: 'Bien implementado',
+      5: 'Totalmente optimizado'
+    };
+    return labels[v];
+  }
+
+  function handleAnswerChange(e) {
+    if (e.target.tagName !== 'INPUT') return;
+    const dim = e.target.dataset.dimension;
+    const idx = e.target.dataset.index;
+    const value = Number(e.target.value);
+    if (!state.answers[dim]) state.answers[dim] = {};
+    state.answers[dim][idx] = value;
+    updateProgress();
+  }
+
+  function updateProgress() {
+    let totalAnswered = 0;
+    dimensions.forEach(dim => {
+      const answered = state.answers[dim.id] ? Object.keys(state.answers[dim.id]).length : 0;
+      totalAnswered += answered;
+      const percent = (answered / 30) * 100;
+      document.getElementById(`bar-${dim.id}`).style.width = `${percent}%`;
+      document.getElementById(`dim-bar-${dim.id}`).style.width = `${percent}%`;
+      document.getElementById(`progress-label-${dim.id}`).textContent = `${answered}/30 respuestas · ${state.submitted[dim.id] ? 'Enviado' : 'Sin enviar'}`;
+      document.getElementById(`dim-progress-${dim.id}`).textContent = `${answered} de 30 respondidas`;
+      const chip = document.getElementById(`chip-${dim.id}`);
+      chip.textContent = state.submitted[dim.id] ? 'Enviado' : (answered > 0 ? 'En curso' : 'Pendiente');
+      chip.style.background = state.submitted[dim.id] ? 'rgba(34,197,94,0.15)' : 'rgba(255,255,255,0.04)';
+      chip.style.borderColor = state.submitted[dim.id] ? 'rgba(34,197,94,0.35)' : 'var(--border)';
+    });
+    const overallPercent = Math.round((totalAnswered / 180) * 100);
+    document.getElementById('progressPercent').textContent = `${overallPercent}%`;
+    document.getElementById('progressBar').style.width = `${overallPercent}%`;
+    document.getElementById('progressDetail').textContent = `${totalAnswered} de 180 respuestas registradas`;
+    document.getElementById('dimsSubmitted').textContent = `${Object.keys(state.submitted).length} / 6`;
+  }
+
+  function handleSubmit(dimId) {
+    const dimAnswers = state.answers[dimId] || {};
+    if (Object.keys(dimAnswers).length < 30) {
+      setStatus(dimId, 'Responde las 30 preguntas antes de enviar.');
+      return;
+    }
+    const values = Object.values(dimAnswers).map(Number);
+    const avgLikert = values.reduce((a,b) => a + b, 0) / values.length;
+    const percentScore = (avgLikert - 1) * 25; // 1->0, 5->100
+    state.submitted[dimId] = true;
+    state.scores[dimId] = Math.round(percentScore * 10) / 10;
+    document.getElementById(`dim-status-${dimId}`).textContent = `Enviado · Puntaje ${state.scores[dimId]}%`;
+    setStatus(dimId, 'Dimensión enviada. El tablero se ha actualizado.');
+    updateProgress();
+    updateResults();
+  }
+
+  function setStatus(dimId, text) {
+    const el = document.getElementById(`status-${dimId}`);
+    if (el) el.textContent = text;
+  }
+
+  function computeDQAIQ() {
+    const submittedDims = dimensions.filter(d => state.submitted[d.id]);
+    if (submittedDims.length === 0) return { dq: null, aiq: null, partial: true };
+    const dq = submittedDims.reduce((sum, d) => sum + state.scores[d.id], 0) / submittedDims.length;
+    const totalWeight = submittedDims.reduce((sum, d) => sum + d.weightAIQ, 0);
+    const aiq = submittedDims.reduce((sum, d) => sum + state.scores[d.id] * d.weightAIQ, 0) / totalWeight;
+    return { dq: Math.round(dq * 10) / 10, aiq: Math.round(aiq * 10) / 10, partial: submittedDims.length !== dimensions.length };
+  }
+
+  function levelForScore(score) {
+    if (score === null || score === undefined) return { label: 'Pendiente', className: '', key: 'pending' };
+    if (score < 34) return { label: 'Bajo', className: 'bajo', key: 'low' };
+    if (score < 67) return { label: 'Intermedio', className: 'intermedio', key: 'mid' };
+    return { label: 'Alto', className: 'alto', key: 'high' };
+  }
+
+  function renderInsights() {
+    const container = document.getElementById('dimensionInsights');
+    container.innerHTML = '';
+    dimensions.forEach(dim => {
+      const score = state.scores[dim.id];
+      const level = levelForScore(score);
+      const analysis = level.key === 'pending' ? 'Envía la dimensión para ver el análisis.' : interpretations[dim.id][level.key];
+      const card = document.createElement('div');
+      card.className = 'insight-card';
+      card.innerHTML = `
+        <div class="insight-head">
+          <div>
+            <strong>${dim.name}</strong>
+            <div class="small muted">${level.key === 'pending' ? 'Aún no calculado' : 'Interpretación automatizada'}</div>
+          </div>
+          <span class="level ${level.className}">${level.label}</span>
+        </div>
+        <div class="small muted">${score === undefined ? 'Puntaje pendiente' : `Puntaje: ${score}%`}</div>
+        <p>${analysis}</p>
+      `;
+      container.appendChild(card);
+    });
+  }
+
+  function renderActions() {
+    const container = document.getElementById('actionsContainer');
+    const status = document.getElementById('actionStatus');
+    container.innerHTML = '';
+    const submitted = Object.keys(state.submitted).length > 0;
+    status.textContent = submitted ? 'Personalizado con tus respuestas' : 'Esperando envíos';
+    status.style.background = submitted ? 'rgba(34,197,94,0.18)' : 'rgba(255,255,255,0.05)';
+    status.style.borderColor = submitted ? 'rgba(34,197,94,0.35)' : 'var(--border)';
+
+    dimensions.forEach(dim => {
+      const score = state.scores[dim.id];
+      const level = levelForScore(score);
+      const recSet = actionRecommendations[dim.id][level.key] || { focus: 'Completa la dimensión para ver recomendaciones.', actions: [] };
+      const card = document.createElement('div');
+      card.className = 'action-card';
+      card.innerHTML = `
+        <div class="insight-head">
+          <div>
+            <strong>${dim.name}</strong>
+            <div class="small muted">${level.key === 'pending' ? 'Sin puntaje aún' : recSet.focus}</div>
+          </div>
+          <span class="level ${level.className}">${level.label}</span>
+        </div>
+        <div class="small muted">${score === undefined ? 'Completa y envía para priorizar' : `Puntaje: ${score}%`}</div>
+        ${recSet.actions.length ? `<div class="pill-sm">Quick wins y próximos pasos</div>` : ''}
+        ${recSet.actions.length ? `<ul class="list">${recSet.actions.map(a => `<li>${a}</li>`).join('')}</ul>` : '<p class="muted small">Sin recomendaciones hasta enviar.</p>'}
+      `;
+      container.appendChild(card);
+    });
+  }
+
+  let radarChart = null;
+  let barChart = null;
+
+  function initCharts() {
+    const ctxRadar = document.getElementById('radarChart');
+    const ctxBar = document.getElementById('barChart');
+    radarChart = new Chart(ctxRadar, {
+      type: 'radar',
+      data: {
+        labels: dimensions.map(d => d.name),
+        datasets: [{
+          label: 'Puntaje por dimensión',
+          data: Array(dimensions.length).fill(null),
+          fill: true,
+          backgroundColor: 'rgba(37,99,235,0.18)',
+          borderColor: 'rgba(37,99,235,0.9)',
+          pointBackgroundColor: 'rgba(34,197,94,1)'
+        }]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          r: {
+            suggestedMin: 0,
+            suggestedMax: 100,
+            ticks: { stepSize: 20, backdropColor: 'transparent', color: '#94a3b8' },
+            grid: { color: 'rgba(148,163,253,0.25)' },
+            angleLines: { color: 'rgba(51,65,85,0.6)' },
+            pointLabels: { color: '#e2e8f0', font: { size: 11 } }
+          }
+        },
+        plugins: { legend: { labels: { color: '#e2e8f0' } } }
+      }
+    });
+
+    barChart = new Chart(ctxBar, {
+      type: 'bar',
+      data: {
+        labels: ['DQ', 'AIQ'],
+        datasets: [{
+          label: 'Índice',
+          data: [0,0],
+          backgroundColor: ['rgba(37,99,235,0.9)','rgba(34,197,94,0.9)']
+        }]
+      },
+      options: {
+        scales: {
+          y: {
+            suggestedMin: 0,
+            suggestedMax: 100,
+            ticks: { stepSize: 20, color: '#94a3b8' },
+            grid: { color: 'rgba(148,163,253,0.25)' }
+          },
+          x: { ticks: { color: '#94a3b8' } }
+        },
+        plugins: { legend: { display: false } }
+      }
+    });
+  }
+
+  function updateResults() {
+    const data = dimensions.map(d => state.scores[d.id] ?? null);
+    radarChart.data.datasets[0].data = data;
+    radarChart.update();
+
+    const { dq, aiq, partial } = computeDQAIQ();
+    const dqNode = document.getElementById('dqScore');
+    const dqNote = document.getElementById('dqNote');
+    const aiqNode = document.getElementById('aiqScore');
+    const aiqNote = document.getElementById('aiqNote');
+    const status = document.getElementById('resultStatus');
+
+    if (dq !== null) {
+      dqNode.textContent = `${dq}%`;
+      dqNote.textContent = partial ? 'Cálculo parcial (dimensiones enviadas)' : 'Cálculo completo';
+      aiqNode.textContent = `${aiq}%`;
+      aiqNote.textContent = partial ? 'AIQ basado en dimensiones enviadas' : 'AIQ completo con ponderación IA';
+      status.textContent = partial ? 'Parcial' : 'Completo';
+      status.style.background = partial ? 'rgba(245,158,11,0.2)' : 'rgba(34,197,94,0.2)';
+      status.style.borderColor = partial ? 'rgba(245,158,11,0.35)' : 'rgba(34,197,94,0.45)';
+      barChart.data.datasets[0].data = [dq, aiq];
+    } else {
+      dqNode.textContent = '—';
+      dqNote.textContent = 'Esperando envíos';
+      aiqNode.textContent = '—';
+      aiqNote.textContent = 'Esperando envíos';
+      status.textContent = 'Pendiente de envíos';
+      status.style.background = 'rgba(255,255,255,0.05)';
+      status.style.borderColor = 'var(--border)';
+      barChart.data.datasets[0].data = [0,0];
+    }
+    barChart.update();
+    renderInsights();
+    renderActions();
+  }
+
+  if (downloadBtn) {
+    downloadBtn.addEventListener('click', generateZip);
+  }
+
+  createTabs();
+  createProgressCards();
+  createPanels();
+  initCharts();
+  updateProgress();
+  updateResults();
+</script>
+</body>
+</html>
