@@ -294,6 +294,7 @@ function updateInsights(scores) {
       </div>
       <div class="breadcrumb">${subLevelText}</div>
       <p>${level.text} ${detail}. ${guidance}</p>
+      <p>${level.text} ${detail}.</p>
     `;
     dimensionInsights.appendChild(card);
   });

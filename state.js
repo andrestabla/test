@@ -69,6 +69,13 @@ export function computeScores() {
       return Math.round(avg);
     });
     return { id: dim.id, title: dim.title, short: dim.short, color: dim.color, score: Math.round(average), blocks };
+    const average = values.reduce((a, b) => a + b, 0) / values.length;
+    const blocks = dim.blocks.map((_, idx) => {
+      const slice = values.slice(idx * 10, idx * 10 + 10);
+      const avg = slice.reduce((a, b) => a + b, 0) / slice.length;
+      return Math.round(avg * 20);
+    });
+    return { id: dim.id, title: dim.title, short: dim.short, color: dim.color, score: Math.round(average * 20), blocks };
   });
   const dq = Math.round(dimScores.reduce((acc, d) => acc + d.score, 0) / dimScores.length || 0);
   const aiq = Math.round(dimScores.reduce((acc, d) => acc + d.score * (dimensions.find(dd => dd.id === d.id).weightAIQ), 0));
