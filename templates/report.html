@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>Reporte individual</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; color: #0f172a; }
+    h1 { color: #0f172a; }
+    .dim { margin-bottom: 10px; }
+    .dim span { font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>Reporte de madurez digital</h1>
+  <p><strong>Usuario:</strong> {{ response.user.email }}</p>
+  <p><strong>Fecha:</strong> {{ response.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+  <p><strong>Puntaje global:</strong> {{ response.overall_score }}%</p>
+  <h2>Detalle por dimensión</h2>
+  <ul>
+    {% for dim, score in response.dimension_scores_dict().items() %}
+      <li class="dim"><span>{{ dim }}:</span> {{ score }}%</li>
+    {% endfor %}
+  </ul>
+  <h2>Respuestas</h2>
+  <pre>{{ response.responses_as_dict()|tojson(indent=2) }}</pre>
+</body>
+</html>
