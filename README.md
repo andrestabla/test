@@ -1,29 +1,77 @@
-# Batería MD-IA (AlgoritmoT)
+# Plataforma modular MD-IA (Flask)
 
-Cuestionario interactivo de 180 preguntas (30 por dimensión) para evaluar madurez digital e IA con flujo wizard, autoguardado local y tableros de resultados bajo demanda.
+Aplicación web modular para gestionar usuarios, aplicar cuestionarios MD-IA, almacenar respuestas por usuario, visualizar resultados y descargar reportes individuales.
 
-## Uso rápido
+## Requisitos
 
-1. **Generar paquete offline**: el botón crea `mdia-offline.zip` en tu navegador (JSZip) con todos los archivos estáticos.
-2. Extrae el ZIP y abre `index.html` en un navegador moderno. No se requiere backend ni conexión tras la descarga.
-3. Arranca en la **Pantalla de bienvenida (Tab 0)** con instrucciones claras. Inicia la evaluación y usa el menú lateral para saltar entre dimensiones.
-4. Completa cada dimensión en el wizard paso a paso (3 bloques de 10 preguntas) con breadcrumbs “Pregunta X/30”, feedback por bloque y mensajes motivadores.
-5. Presiona **Enviar dimensión** (se habilita cuando respondes las 30) para ver modal de confirmación, micro-radar, termómetro, insights profundizados y actualizar DQ/AIQ.
-6. Visita **Resultados** y **Líneas de acción** para ver radar global, DQ/AIQ + benchmark (sector, líderes, histórico) y recomendaciones dinámicas; descarga el PDF cuando completes todo.
+- Python 3.10+
+- Pip
 
-## Contenido del paquete
+## Instalación
 
-- `index.html`: interfaz principal, menú lateral, instrucciones ancladas y tableros.
-- `questions.js`: banco de 180 preguntas agrupadas en bloques de 10 por subdimensión.
-- `state.js`: gestión de estado, autoguardado localStorage y cálculo de puntuaciones.
-- `charts.js`: carga diferida de gráficos (Chart.js) y mini-radares/termómetros.
-- `main.js`: lógica del wizard, accesibilidad, gamificación y generación de ZIP/PDF.
-- `README.md`: esta guía de uso.
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install flask flask_sqlalchemy
+```
 
-## Características clave
+*(Incluye `werkzeug` desde Flask. Agrega extensiones adicionales si lo deseas.)*
 
-- Pantalla inicial con instrucciones, breadcrumbs actualizados por pregunta, menú lateral con iconos y progreso por bloque/dimensión.
-- Escala Likert visual con color por nivel, atajos de teclado y hover explicativo.
-- Autoguardado y recuperación desde localStorage; badges, confeti y mensajes motivadores por bloque/completitud.
-- Tablero de resultados que carga gráficos solo tras el primer envío; actualiza datasets sin recrearlos y añade benchmark sector/líderes/histórico.
-- Insights consultivos profundizados por subdimensión, líneas de acción dinámicas y exportación PDF.
+## Ejecución
+
+```bash
+export FLASK_APP=app.py
+flask run
+```
+
+o bien:
+
+```bash
+python app.py
+```
+
+La base de datos SQLite (`instance/cuestionarios.db`) y las carpetas `instance/responses` y `instance/reports` se generan automáticamente.
+
+## Estructura de carpetas
+
+```
+proyecto_cuestionarios/
+├─ app.py                # crea la app Flask y registra blueprints
+├─ config.py             # configuración (DB, rutas de reportes)
+├─ models.py             # modelos SQLAlchemy (User, QuestionnaireResponse)
+├─ auth/
+│  ├─ __init__.py
+│  ├─ routes.py          # login, registro, logout
+│  └─ utils.py           # decoradores login_required / role_required
+├─ questionnaires/
+│  ├─ __init__.py
+│  ├─ data.py            # preguntas y dimensiones
+│  └─ routes.py          # captura de respuestas y guardado
+├─ results/
+│  ├─ __init__.py
+│  └─ routes.py          # visualizaciones por usuario
+├─ reports/
+│  ├─ __init__.py
+│  └─ routes.py          # descarga HTML por respuesta
+└─ templates/
+   ├─ base.html
+   ├─ login.html
+   ├─ register.html
+   ├─ questionnaire.html
+   ├─ results.html
+   └─ report.html
+```
+
+## Flujo funcional
+
+1. **Registro / Login:** usuarios se crean con correo y contraseña (hash). Se admite rol `usuario` o `admin` y se guarda en la sesión.
+2. **Cuestionario:** cuestionario MD-IA compacto (12 preguntas) basado en seis dimensiones. Se almacena cada respuesta, puntaje global y desglose por dimensión.
+3. **Persistencia:** las respuestas quedan en SQLite y en un archivo JSON independiente dentro de `instance/responses/`.
+4. **Resultados:** cada usuario solo visualiza sus envíos. Se grafica la evolución por dimensión mediante Chart.js y se listan envíos.
+5. **Informes:** cada envío puede descargarse como HTML (`report.html`) con datos del usuario, fecha, puntajes y respuestas. Solo el dueño o un admin pueden descargarlo.
+
+## Extensiones sugeridas
+
+- Añadir nuevos cuestionarios replicando la estructura del módulo `questionnaires`.
+- Cambiar la base de datos a PostgreSQL editando `SQLALCHEMY_DATABASE_URI` en `config.py`.
+- Implementar módulos adicionales (por ejemplo, dashboards administrativos) usando `role_required('admin')` para proteger rutas.
