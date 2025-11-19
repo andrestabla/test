@@ -16,6 +16,10 @@ pip install -r requirements.txt
 ```
 
 Los paquetes listados cubren Flask y la extensión de base de datos utilizada en la aplicación.
+pip install flask flask_sqlalchemy
+```
+
+*(Incluye `werkzeug` desde Flask. Agrega extensiones adicionales si lo deseas.)*
 
 ## Ejecución
 
